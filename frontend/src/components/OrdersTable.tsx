@@ -1,24 +1,27 @@
+import type { Translation } from '../i18n';
 import type { Order } from '../types/order';
 import { formatCurrency, formatDate, shortId } from '../utils/formatters';
 
 interface OrdersTableProps {
   orders: Order[];
   selectedOrderId?: string;
+  locale: string;
+  text: Translation['orders']['columns'];
   onSelectOrder: (order: Order) => void;
 }
 
-export function OrdersTable({ orders, selectedOrderId, onSelectOrder }: OrdersTableProps) {
+export function OrdersTable({ orders, selectedOrderId, locale, text, onSelectOrder }: OrdersTableProps) {
   return (
     <div className="table-shell">
       <table>
         <thead>
           <tr>
-            <th>Pedido</th>
-            <th>Cliente</th>
-            <th>E-mail</th>
-            <th>Valor</th>
-            <th>Status</th>
-            <th>Criado em</th>
+            <th>{text.order}</th>
+            <th>{text.customer}</th>
+            <th>{text.email}</th>
+            <th>{text.amount}</th>
+            <th>{text.status}</th>
+            <th>{text.createdAt}</th>
           </tr>
         </thead>
         <tbody>
@@ -31,11 +34,11 @@ export function OrdersTable({ orders, selectedOrderId, onSelectOrder }: OrdersTa
               <td className="mono">{shortId(order.id)}</td>
               <td>{order.customerName}</td>
               <td>{order.customerEmail}</td>
-              <td>{formatCurrency(order.totalAmount)}</td>
+              <td>{formatCurrency(order.totalAmount, locale)}</td>
               <td>
                 <span className="status-badge">{order.status}</span>
               </td>
-              <td>{formatDate(order.createdAt)}</td>
+              <td>{formatDate(order.createdAt, locale)}</td>
             </tr>
           ))}
         </tbody>

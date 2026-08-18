@@ -1,5 +1,7 @@
 # Fulfill
 
+[English version](README.en.md)
+
 Fulfill é uma plataforma de gerenciamento de pedidos criada para demonstrar, de forma prática, uma arquitetura de microsserviços orientada a eventos.
 
 O sistema permite criar, listar e visualizar pedidos por meio de um frontend em React. Ao criar um pedido, o backend persiste os dados em PostgreSQL e publica um evento no Apache Kafka, que é consumido de forma assíncrona por um serviço de notificações.

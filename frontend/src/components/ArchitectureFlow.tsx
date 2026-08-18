@@ -1,14 +1,18 @@
-const steps = ['Pedido criado', 'PostgreSQL', 'Kafka', 'Notification Service'];
+import type { Translation } from '../i18n';
 
-export function ArchitectureFlow() {
+interface ArchitectureFlowProps {
+  text: Translation['architecture'];
+}
+
+export function ArchitectureFlow({ text }: ArchitectureFlowProps) {
   return (
-    <section className="architecture" aria-label="Fluxo arquitetural">
+    <section className="architecture" aria-label={text.label}>
       <div>
-        <span className="eyebrow">Fluxo orientado a eventos</span>
-        <p>Pedido criado {'->'} PostgreSQL {'->'} Kafka {'->'} Notification Service</p>
+        <span className="eyebrow">{text.title}</span>
+        <p>{text.description}</p>
       </div>
       <ol className="architecture-steps">
-        {steps.map((step) => (
+        {text.steps.map((step) => (
           <li key={step}>{step}</li>
         ))}
       </ol>

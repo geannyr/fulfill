@@ -1,8 +1,10 @@
 import { type FormEvent, useState } from 'react';
+import type { Translation } from '../i18n';
 import type { CreateOrderPayload } from '../types/order';
 
 interface OrderFormProps {
   isSubmitting: boolean;
+  text: Translation['form'];
   onCancel: () => void;
   onSubmit: (payload: CreateOrderPayload) => Promise<void>;
 }
@@ -19,7 +21,7 @@ const initialState: FormState = {
   totalAmount: ''
 };
 
-export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) {
+export function OrderForm({ isSubmitting, text, onCancel, onSubmit }: OrderFormProps) {
   const [form, setForm] = useState<FormState>(initialState);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,15 +35,15 @@ export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) 
 
     const amount = Number(form.totalAmount);
     if (!form.customerName.trim()) {
-      setError('Informe o nome do cliente.');
+      setError(text.nameRequired);
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail)) {
-      setError('Informe um e-mail válido.');
+      setError(text.invalidEmail);
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Informe um valor maior que zero.');
+      setError(text.invalidAmount);
       return;
     }
 
@@ -57,7 +59,7 @@ export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) 
     <form className="order-form" onSubmit={handleSubmit} noValidate>
       <div className="form-grid">
         <label>
-          Nome do cliente
+          {text.customerName}
           <input
             value={form.customerName}
             onChange={(event) => updateField('customerName', event.target.value)}
@@ -66,7 +68,7 @@ export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) 
           />
         </label>
         <label>
-          E-mail
+          {text.customerEmail}
           <input
             value={form.customerEmail}
             onChange={(event) => updateField('customerEmail', event.target.value)}
@@ -76,7 +78,7 @@ export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) 
           />
         </label>
         <label>
-          Valor total
+          {text.totalAmount}
           <input
             value={form.totalAmount}
             onChange={(event) => updateField('totalAmount', event.target.value)}
@@ -88,10 +90,10 @@ export function OrderForm({ isSubmitting, onCancel, onSubmit }: OrderFormProps) 
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="form-actions">
         <button className="secondary-button" type="button" onClick={onCancel}>
-          Cancelar
+          {text.cancel}
         </button>
         <button className="primary-button" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Criando...' : 'Criar pedido'}
+          {isSubmitting ? text.submitting : text.submit}
         </button>
       </div>
     </form>

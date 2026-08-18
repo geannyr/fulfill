@@ -3,11 +3,24 @@ import { ArchitectureFlow } from '../components/ArchitectureFlow';
 import { OrderDetails } from '../components/OrderDetails';
 import { OrderForm } from '../components/OrderForm';
 import { OrdersTable } from '../components/OrdersTable';
+import { languageLabels, type Language, translations } from '../i18n';
 import { createOrder, listOrders } from '../services/ordersApi';
 import type { CreateOrderPayload, Order } from '../types/order';
 import { formatCurrency } from '../utils/formatters';
 
+const languageStorageKey = 'fulfill-language';
+const locales: Record<Language, string> = {
+  pt: 'pt-BR',
+  en: 'en-US'
+};
+
+function getInitialLanguage(): Language {
+  const storedLanguage = window.localStorage.getItem(languageStorageKey);
+  return storedLanguage === 'en' ? 'en' : 'pt';
+}
+
 export function OrdersPage() {
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,10 +29,18 @@ export function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const text = translations[language];
+  const locale = locales[language];
+
   const totalRevenue = useMemo(
     () => orders.reduce((total, order) => total + Number(order.totalAmount), 0),
     [orders]
   );
+
+  function changeLanguage(nextLanguage: Language) {
+    setLanguage(nextLanguage);
+    window.localStorage.setItem(languageStorageKey, nextLanguage);
+  }
 
   async function loadOrders() {
     setIsLoading(true);
@@ -29,7 +50,7 @@ export function OrdersPage() {
       setOrders(data);
       setSelectedOrder((current) => current ?? data[0] ?? null);
     } catch {
-      setError('Não foi possível carregar os pedidos.');
+      setError(text.orders.loadError);
     } finally {
       setIsLoading(false);
     }
@@ -44,9 +65,9 @@ export function OrdersPage() {
       setOrders((current) => [createdOrder, ...current]);
       setSelectedOrder(createdOrder);
       setIsFormOpen(false);
-      setSuccessMessage('Pedido criado com sucesso.');
+      setSuccessMessage(text.orders.createSuccess);
     } catch {
-      setError('Não foi possível criar o pedido.');
+      setError(text.orders.createError);
     } finally {
       setIsSubmitting(false);
     }
@@ -63,42 +84,58 @@ export function OrdersPage() {
           <div className="brand-mark" aria-hidden="true">F</div>
           <div>
             <h1>Fulfill</h1>
-            <p>Event-driven order management</p>
+            <p>{text.app.subtitle}</p>
           </div>
         </div>
-        <button className="primary-button" type="button" onClick={() => setIsFormOpen(true)}>
-          Novo pedido
-        </button>
+        <div className="topbar-actions">
+          <div className="language-switcher" aria-label="Language">
+            {(Object.keys(languageLabels) as Language[]).map((availableLanguage) => (
+              <button
+                key={availableLanguage}
+                className={language === availableLanguage ? 'active' : undefined}
+                type="button"
+                onClick={() => changeLanguage(availableLanguage)}
+                aria-pressed={language === availableLanguage}
+              >
+                {languageLabels[availableLanguage]}
+              </button>
+            ))}
+          </div>
+          <button className="primary-button" type="button" onClick={() => setIsFormOpen(true)}>
+            {text.app.newOrder}
+          </button>
+        </div>
       </header>
 
-      <section className="metrics-grid" aria-label="Resumo de pedidos">
+      <section className="metrics-grid" aria-label={text.app.summaryLabel}>
         <div className="metric">
-          <span>Total de pedidos</span>
+          <span>{text.metrics.totalOrders}</span>
           <strong>{orders.length}</strong>
         </div>
         <div className="metric">
-          <span>Valor processado</span>
-          <strong>{formatCurrency(totalRevenue)}</strong>
+          <span>{text.metrics.processedValue}</span>
+          <strong>{formatCurrency(totalRevenue, locale)}</strong>
         </div>
         <div className="metric">
-          <span>Fluxo</span>
+          <span>{text.metrics.flow}</span>
           <strong>REST + Kafka</strong>
         </div>
       </section>
 
-      <ArchitectureFlow />
+      <ArchitectureFlow text={text.architecture} />
 
       {successMessage && <p className="toast success" role="status">{successMessage}</p>}
       {error && <p className="toast error" role="alert">{error}</p>}
 
       {isFormOpen && (
-        <section className="form-section" aria-label="Novo pedido">
+        <section className="form-section" aria-label={text.form.title}>
           <div className="section-heading">
-            <h2>Novo pedido</h2>
-            <p>Crie um pedido e acompanhe o evento percorrer o backend.</p>
+            <h2>{text.form.title}</h2>
+            <p>{text.form.description}</p>
           </div>
           <OrderForm
             isSubmitting={isSubmitting}
+            text={text.form}
             onCancel={() => setIsFormOpen(false)}
             onSubmit={handleCreateOrder}
           />
@@ -108,25 +145,32 @@ export function OrdersPage() {
       <section className="content-grid">
         <div className="orders-section">
           <div className="section-heading">
-            <h2>Pedidos</h2>
+            <h2>{text.orders.title}</h2>
             <button className="secondary-button" type="button" onClick={() => void loadOrders()}>
-              Atualizar
+              {text.orders.refresh}
             </button>
           </div>
 
-          {isLoading && <div className="state-box">Carregando pedidos...</div>}
+          {isLoading && <div className="state-box">{text.orders.loading}</div>}
           {!isLoading && !error && orders.length === 0 && (
-            <div className="state-box">Nenhum pedido criado ainda.</div>
+            <div className="state-box">{text.orders.empty}</div>
           )}
           {!isLoading && orders.length > 0 && (
             <OrdersTable
               orders={orders}
               selectedOrderId={selectedOrder?.id}
+              locale={locale}
+              text={text.orders.columns}
               onSelectOrder={setSelectedOrder}
             />
           )}
         </div>
-        <OrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+        <OrderDetails
+          order={selectedOrder}
+          locale={locale}
+          text={text.details}
+          onClose={() => setSelectedOrder(null)}
+        />
       </section>
     </main>
   );

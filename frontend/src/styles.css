@@ -40,6 +40,12 @@ button {
   margin-bottom: 24px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand-group {
   display: flex;
   align-items: center;
@@ -89,6 +95,36 @@ h2 {
     background 160ms ease,
     border-color 160ms ease,
     transform 160ms ease;
+}
+
+.language-switcher {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #d6dce5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.language-switcher button {
+  min-width: 38px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #344054;
+  background: transparent;
+  font-weight: 800;
+}
+
+.language-switcher button:hover,
+.language-switcher button:focus-visible {
+  background: #edf4f7;
+}
+
+.language-switcher button.active {
+  color: #ffffff;
+  background: #176b87;
 }
 
 .primary-button {
@@ -378,13 +414,19 @@ dd {
 
   .architecture,
   .topbar,
+  .topbar-actions,
   .section-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
   .topbar .primary-button,
+  .language-switcher,
   .section-heading .secondary-button {
     width: 100%;
+  }
+
+  .language-switcher button {
+    flex: 1;
   }
 }
