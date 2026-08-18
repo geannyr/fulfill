@@ -26,6 +26,8 @@ server:
   port: ${SERVER_PORT:8080}
 
 fulfill:
+  cors:
+    allowed-origin: ${FULFILL_CORS_ALLOWED_ORIGIN:http://localhost:5173}
   kafka:
     topics:
       order-created: ${ORDER_CREATED_TOPIC:order-created}

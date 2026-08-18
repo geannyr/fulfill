@@ -3,6 +3,19 @@ CONTEXTO.md
 
 # Build outputs
 target/
+dist/
+node_modules/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Environment files
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+!.env.example
+!frontend/.env.example
 
 # IDE/editor files
 .idea/
