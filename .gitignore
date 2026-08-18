@@ -1,0 +1,10 @@
+# Local project context used by Codex during incremental development.
+CONTEXTO.md
+
+# Build outputs
+target/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml

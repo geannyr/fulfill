@@ -1,17 +1,17 @@
 # Fulfill
 
-Fulfill e uma plataforma de gerenciamento de pedidos com arquitetura orientada a eventos. O projeto sera desenvolvido de forma incremental para demonstrar conhecimento pratico em Java 17+, Spring Boot, APIs REST, JPA/Hibernate, PostgreSQL, Apache Kafka, Docker, microsservicos, testes automatizados e boas praticas de desenvolvimento.
+Fulfill é uma plataforma de gerenciamento de pedidos com arquitetura orientada a eventos. O projeto será desenvolvido de forma incremental para demonstrar conhecimento prático em Java 17+, Spring Boot, APIs REST, JPA/Hibernate, PostgreSQL, Apache Kafka, Docker, microsserviços, testes automatizados e boas práticas de desenvolvimento.
 
-O projeto esta sendo implementado de forma incremental. A etapa atual contem o `order-service` com cadastro e consulta de pedidos em PostgreSQL. Kafka e `notification-service` ainda nao foram implementados.
+O projeto está sendo implementado de forma incremental. A etapa atual contém o `order-service` com cadastro e consulta de pedidos em PostgreSQL e publicação de eventos no Apache Kafka. O `notification-service` ainda não foi implementado.
 
-## Visao Geral
+## Visão Geral
 
-A primeira versao planejada do Fulfill sera composta por dois microsservicos:
+A primeira versão planejada do Fulfill será composta por dois microsserviços:
 
 - `order-service`: cria e consulta pedidos, persiste os dados em PostgreSQL e publica eventos de pedidos no Kafka.
-- `notification-service`: consome eventos de pedidos de forma assincrona e simula o envio de notificacoes por log ou historico persistido.
+- `notification-service`: consome eventos de pedidos de forma assíncrona e simula o envio de notificações por log ou histórico persistido.
 
-Futuramente, o projeto podera receber um `inventory-service` e um frontend em React, mas eles estao fora do escopo inicial.
+Futuramente, o projeto poderá receber um `inventory-service` e um frontend em React, mas eles estão fora do escopo inicial.
 
 ## Arquitetura Inicial
 
@@ -34,52 +34,52 @@ Apache Kafka
        v
 notification-service
        |
-       | log ou historico
+       | log ou histórico
        v
-Notificacao simulada
+Notificação simulada
 ```
 
-O fluxo principal sera orientado a eventos: o `order-service` nao chamara diretamente o `notification-service`. Em vez disso, publicara um evento no Kafka, permitindo que a notificacao aconteca de forma assincrona e desacoplada.
+O fluxo principal será orientado a eventos: o `order-service` não chamará diretamente o `notification-service`. Em vez disso, publicará um evento no Kafka, permitindo que a notificação aconteça de forma assíncrona e desacoplada.
 
-## Responsabilidades dos Servicos
+## Responsabilidades dos Serviços
 
 ### order-service
 
-- Expor API REST para criacao e consulta de pedidos.
-- Validar dados basicos da requisicao.
+- Expor API REST para criação e consulta de pedidos.
+- Validar dados básicos da requisição.
 - Persistir pedidos no PostgreSQL.
-- Gerar um identificador unico para cada pedido.
-- Publicar o evento `OrderCreatedEvent` apos a criacao do pedido.
+- Gerar um identificador único para cada pedido.
+- Publicar o evento `OrderCreatedEvent` após a criação do pedido.
 - Ser a fonte de verdade inicial para os dados do pedido.
 
 ### notification-service
 
 - Consumir eventos `OrderCreatedEvent` do Kafka.
-- Processar notificacoes de forma assincrona.
-- Simular envio de notificacao por log na primeira versao.
-- Opcionalmente persistir um historico de notificacoes em uma etapa futura.
-- Manter sua propria responsabilidade, sem consultar diretamente o banco do `order-service`.
+- Processar notificações de forma assíncrona.
+- Simular envio de notificação por log na primeira versão.
+- Opcionalmente persistir um histórico de notificações em uma etapa futura.
+- Manter sua própria responsabilidade, sem consultar diretamente o banco do `order-service`.
 
-## Fluxo de Criacao de Pedido
+## Fluxo de Criação de Pedido
 
 1. Um cliente envia `POST /api/orders` para o `order-service`.
 2. O `order-service` valida os dados recebidos.
 3. O `order-service` cria o pedido com status inicial `CREATED`.
-4. O pedido e salvo no PostgreSQL.
-5. Em uma etapa futura, o `order-service` publicara um `OrderCreatedEvent` no topico Kafka `orders.v1.events`.
-6. Em uma etapa futura, o `notification-service` consumira o evento de forma assincrona.
-7. Em uma etapa futura, o `notification-service` registrara em log a notificacao simulada.
+4. O pedido é salvo no PostgreSQL.
+5. O `order-service` publica um `OrderCreatedEvent` no tópico Kafka `order-created`.
+6. Em uma etapa futura, o `notification-service` consumirá o evento de forma assíncrona.
+7. Em uma etapa futura, o `notification-service` registrará em log a notificação simulada.
 
 ## Contratos Principais
 
-### Endpoint de criacao de pedido
+### Endpoint de criação de pedido
 
 ```http
 POST /api/orders
 Content-Type: application/json
 ```
 
-Exemplo de requisicao:
+Exemplo de requisição:
 
 ```json
 {
@@ -102,38 +102,35 @@ Exemplo de resposta:
 }
 ```
 
-### Modelo basico de pedido
+### Modelo básico de pedido
 
 Campos iniciais:
 
-- `id`: identificador unico do pedido.
+- `id`: identificador único do pedido.
 - `customerName`: nome do cliente.
 - `customerEmail`: email do cliente.
 - `status`: status do pedido, inicialmente `CREATED`.
-- `totalAmount`: valor total informado na criacao nesta etapa inicial.
-- `createdAt`: data e hora de criacao.
+- `totalAmount`: valor total informado na criação nesta etapa inicial.
+- `createdAt`: data e hora de criação.
 
 ### Evento OrderCreatedEvent
 
-Kafka ainda nao foi implementado. Este contrato sera usado como base futura e deve acompanhar o modelo vigente do pedido quando a etapa de eventos for iniciada.
+O evento é publicado pelo `order-service` após a persistência do pedido.
 
 ```json
 {
-  "eventId": "evt_123",
-  "eventType": "OrderCreatedEvent",
-  "eventVersion": 1,
-  "occurredAt": "2026-08-17T21:30:00Z",
   "orderId": "5c6cc3ce-4b52-4cb6-9b16-86fa85920c2f",
   "customerName": "Ana Souza",
   "customerEmail": "ana@example.com",
   "status": "CREATED",
-  "totalAmount": 99.80
+  "totalAmount": 99.80,
+  "createdAt": "2026-08-17T21:30:00Z"
 }
 ```
 
-### Topico Kafka
+### Tópico Kafka
 
-- Nome: `orders.v1.events`
+- Nome: `order-created`
 - Chave da mensagem: `orderId`
 - Valor da mensagem: JSON do `OrderCreatedEvent`
 - Consumidor inicial: `notification-service`
@@ -143,7 +140,6 @@ Kafka ainda nao foi implementado. Este contrato sera usado como base futura e de
 ```text
 fulfill/
   README.md
-  CONTEXTO.md
   docker-compose.yml
   order-service/
     pom.xml
@@ -157,25 +153,25 @@ fulfill/
   scripts/
 ```
 
-Essa estrutura permite manter os servicos independentes, mas versionados juntos. Para um projeto de portfolio, isso facilita a navegacao, a demonstracao e a execucao local com Docker Compose.
+Essa estrutura permite manter os serviços independentes, mas versionados juntos. Para um projeto de portfólio, isso facilita a navegação, a demonstração e a execução local com Docker Compose.
 
 ## Docker Compose
 
 Componentes previstos:
 
-- PostgreSQL para persistencia do `order-service`.
-- Apache Kafka para mensageria entre os servicos.
+- PostgreSQL para persistência do `order-service`.
+- Apache Kafka para mensageria entre os serviços.
 - Zookeeper ou Kafka em modo KRaft, dependendo da imagem escolhida.
 - `order-service`, quando implementado.
 - `notification-service`, quando implementado.
-- Opcionalmente, Kafka UI para inspecionar topicos e mensagens durante o desenvolvimento.
+- Opcionalmente, Kafka UI para inspecionar tópicos e mensagens durante o desenvolvimento.
 
 ## Executando a Etapa Atual
 
-Subir o PostgreSQL:
+Subir PostgreSQL e Kafka:
 
 ```bash
-docker compose up -d postgres
+docker compose up -d postgres kafka
 ```
 
 Executar o `order-service` localmente:
@@ -192,36 +188,41 @@ cd order-service
 mvn test
 ```
 
-Endpoints disponiveis nesta etapa:
+Endpoints disponíveis nesta etapa:
 
 - `POST /api/orders`
 - `GET /api/orders/{id}`
 - `GET /api/orders`
 
-## Decisoes Arquiteturais
+Verificar mensagens publicadas no Kafka:
 
-- Monorepo: simplifica o desenvolvimento local e a apresentacao do projeto.
-- Microsservicos pequenos: cada servico tem uma responsabilidade clara.
-- Comunicacao assincrona via Kafka: reduz acoplamento entre pedido e notificacao.
-- REST para entrada externa: facilita testes manuais, documentacao e consumo por futuro frontend.
-- PostgreSQL no `order-service`: banco relacional e adequado para pedidos, itens e consistencia transacional.
-- Evento versionado: `eventVersion` permite evoluir o contrato com mais seguranca.
-- Topico com versao no nome: `orders.v1.events` deixa explicita a compatibilidade do contrato.
-- Notificacao simulada no inicio: mantem o projeto realista sem introduzir provedores externos cedo demais.
+```bash
+docker exec -it fulfill-kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic order-created --from-beginning --max-messages 1
+```
 
-## Trade-offs e Pontos de Atencao
+## Decisões Arquiteturais
 
-- Consistencia eventual: a notificacao pode acontecer alguns instantes depois da criacao do pedido.
-- Falha entre salvar pedido e publicar evento: em uma versao inicial pode ser aceito, mas futuramente vale estudar Outbox Pattern.
+- Monorepo: simplifica o desenvolvimento local e a apresentação do projeto.
+- Microsserviços pequenos: cada serviço tem uma responsabilidade clara.
+- Comunicação assíncrona via Kafka: reduz acoplamento entre pedido e notificação.
+- REST para entrada externa: facilita testes manuais, documentação e consumo por futuro frontend.
+- PostgreSQL no `order-service`: banco relacional e adequado para pedidos, itens e consistência transacional.
+- Tópico `order-created`: nome simples e direto para esta etapa inicial do projeto.
+- Serialização JSON no Kafka: facilita inspeção local e integração futura com outros serviços.
+- Notificação simulada no início: mantém o projeto realista sem introduzir provedores externos cedo demais.
+
+## Trade-offs e Pontos de Atenção
+
+- Consistência eventual: a notificação pode acontecer alguns instantes depois da criação do pedido.
+- Falha entre salvar pedido e publicar evento: em uma versão inicial pode ser aceito, mas futuramente vale estudar Outbox Pattern.
 - Duplicidade de eventos: consumidores Kafka devem ser pensados para processamento idempotente.
-- Evolucao de contratos: mudancas no evento precisam preservar consumidores existentes.
-- Complexidade operacional: Kafka adiciona valor arquitetural, mas tambem exige configuracao e observabilidade.
-- Microsservicos em portfolio: o escopo precisa ser controlado para nao virar complexidade artificial.
+- Evolução de contratos: mudanças no evento precisam preservar consumidores existentes.
+- Complexidade operacional: Kafka adiciona valor arquitetural, mas também exige configuração e observabilidade.
+- Microsserviços em portfólio: o escopo precisa ser controlado para não virar complexidade artificial.
 
-## Proximos Passos
+## Próximos Passos
 
 1. Expandir o modelo de pedido com itens.
-2. Configurar Kafka.
-3. Publicar `OrderCreatedEvent`.
-4. Criar o `notification-service`.
-5. Consumir eventos de pedido assincronamente.
+2. Criar o `notification-service`.
+3. Consumir eventos de pedido assincronamente.
+4. Evoluir resiliência da publicação de eventos, possivelmente com Outbox Pattern.

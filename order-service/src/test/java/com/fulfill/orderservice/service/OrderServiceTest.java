@@ -4,6 +4,7 @@ import com.fulfill.orderservice.domain.Order;
 import com.fulfill.orderservice.domain.OrderStatus;
 import com.fulfill.orderservice.dto.CreateOrderRequest;
 import com.fulfill.orderservice.dto.OrderResponse;
+import com.fulfill.orderservice.event.OrderEventPublisher;
 import com.fulfill.orderservice.exception.OrderNotFoundException;
 import com.fulfill.orderservice.mapper.OrderMapper;
 import com.fulfill.orderservice.repository.OrderRepository;
@@ -33,6 +34,9 @@ class OrderServiceTest {
 
     @Mock
     private OrderMapper orderMapper;
+
+    @Mock
+    private OrderEventPublisher orderEventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -69,6 +73,7 @@ class OrderServiceTest {
         assertThat(savedOrder.getId()).isNotNull();
         assertThat(savedOrder.getCreatedAt()).isNotNull();
         assertThat(response).isEqualTo(expectedResponse);
+        verify(orderEventPublisher).publishOrderCreated(savedOrder);
     }
 
     @Test
