@@ -2,7 +2,7 @@
 
 Fulfill é uma plataforma de gerenciamento de pedidos com arquitetura orientada a eventos. O projeto será desenvolvido de forma incremental para demonstrar conhecimento prático em Java 17+, Spring Boot, APIs REST, JPA/Hibernate, PostgreSQL, Apache Kafka, Docker, microsserviços, testes automatizados e boas práticas de desenvolvimento.
 
-O projeto está sendo implementado de forma incremental. A etapa atual contém o `order-service` com cadastro e consulta de pedidos em PostgreSQL e publicação de eventos no Apache Kafka. O `notification-service` ainda não foi implementado.
+O projeto está sendo implementado de forma incremental. A etapa atual contém o `order-service` com cadastro e consulta de pedidos em PostgreSQL, publicação de eventos no Apache Kafka e um `notification-service` que consome esses eventos para simular notificações por log.
 
 ## Visão Geral
 
@@ -67,8 +67,8 @@ O fluxo principal será orientado a eventos: o `order-service` não chamará dir
 3. O `order-service` cria o pedido com status inicial `CREATED`.
 4. O pedido é salvo no PostgreSQL.
 5. O `order-service` publica um `OrderCreatedEvent` no tópico Kafka `order-created`.
-6. Em uma etapa futura, o `notification-service` consumirá o evento de forma assíncrona.
-7. Em uma etapa futura, o `notification-service` registrará em log a notificação simulada.
+6. O `notification-service` consome o evento de forma assíncrona.
+7. O `notification-service` registra em log a notificação simulada.
 
 ## Contratos Principais
 
@@ -133,7 +133,7 @@ O evento é publicado pelo `order-service` após a persistência do pedido.
 - Nome: `order-created`
 - Chave da mensagem: `orderId`
 - Valor da mensagem: JSON do `OrderCreatedEvent`
-- Consumidor inicial: `notification-service`
+- Consumer group inicial: `notification-service`
 
 ## Estrutura Sugerida do Monorepo
 
@@ -161,9 +161,9 @@ Componentes previstos:
 
 - PostgreSQL para persistência do `order-service`.
 - Apache Kafka para mensageria entre os serviços.
-- Zookeeper ou Kafka em modo KRaft, dependendo da imagem escolhida.
-- `order-service`, quando implementado.
-- `notification-service`, quando implementado.
+- Kafka em modo KRaft para simplificar o ambiente local.
+- `order-service` executado localmente via Maven nesta etapa.
+- `notification-service` executado localmente via Maven nesta etapa.
 - Opcionalmente, Kafka UI para inspecionar tópicos e mensagens durante o desenvolvimento.
 
 ## Executando a Etapa Atual
@@ -181,10 +181,19 @@ cd order-service
 mvn spring-boot:run
 ```
 
+Executar o `notification-service` localmente, em outro terminal:
+
+```bash
+cd notification-service
+mvn spring-boot:run
+```
+
 Executar os testes:
 
 ```bash
 cd order-service
+mvn test
+cd ../notification-service
 mvn test
 ```
 
@@ -200,6 +209,14 @@ Verificar mensagens publicadas no Kafka:
 docker exec -it fulfill-kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic order-created --from-beginning --max-messages 1
 ```
 
+Validar o fluxo completo:
+
+1. Suba PostgreSQL e Kafka com `docker compose up -d postgres kafka`.
+2. Inicie o `order-service` com `mvn spring-boot:run`.
+3. Inicie o `notification-service` com `mvn spring-boot:run`.
+4. Crie um pedido em `POST /api/orders`.
+5. Confirme no log do `notification-service` a mensagem `Simulated notification processed`.
+
 ## Decisões Arquiteturais
 
 - Monorepo: simplifica o desenvolvimento local e a apresentação do projeto.
@@ -209,6 +226,8 @@ docker exec -it fulfill-kafka kafka-console-consumer.sh --bootstrap-server local
 - PostgreSQL no `order-service`: banco relacional e adequado para pedidos, itens e consistência transacional.
 - Tópico `order-created`: nome simples e direto para esta etapa inicial do projeto.
 - Serialização JSON no Kafka: facilita inspeção local e integração futura com outros serviços.
+- Consumer group `notification-service`: identifica claramente o consumidor responsável por notificações.
+- Contrato de evento duplicado por serviço: evita acoplamento direto entre os microsserviços.
 - Notificação simulada no início: mantém o projeto realista sem introduzir provedores externos cedo demais.
 
 ## Trade-offs e Pontos de Atenção
@@ -223,6 +242,6 @@ docker exec -it fulfill-kafka kafka-console-consumer.sh --bootstrap-server local
 ## Próximos Passos
 
 1. Expandir o modelo de pedido com itens.
-2. Criar o `notification-service`.
-3. Consumir eventos de pedido assincronamente.
-4. Evoluir resiliência da publicação de eventos, possivelmente com Outbox Pattern.
+2. Persistir histórico de notificações, se fizer sentido para demonstração.
+3. Evoluir resiliência da publicação de eventos, possivelmente com Outbox Pattern.
+4. Adicionar retry/dead-letter topic quando houver necessidade real.
