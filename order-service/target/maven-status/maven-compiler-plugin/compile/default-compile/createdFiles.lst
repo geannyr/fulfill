@@ -1,0 +1,12 @@
+com\fulfill\orderservice\mapper\OrderMapper.class
+com\fulfill\orderservice\dto\ErrorResponse.class
+com\fulfill\orderservice\controller\OrderController.class
+com\fulfill\orderservice\domain\Order.class
+com\fulfill\orderservice\exception\GlobalExceptionHandler.class
+com\fulfill\orderservice\domain\OrderStatus.class
+com\fulfill\orderservice\service\OrderService.class
+com\fulfill\orderservice\repository\OrderRepository.class
+com\fulfill\orderservice\dto\OrderResponse.class
+com\fulfill\orderservice\dto\CreateOrderRequest.class
+com\fulfill\orderservice\exception\OrderNotFoundException.class
+com\fulfill\orderservice\OrderServiceApplication.class
